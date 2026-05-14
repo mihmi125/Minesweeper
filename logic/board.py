@@ -41,17 +41,21 @@ class Board:
 
     def reveal_cell(self, r, c):
         cell = self.grid[r][c]
-        if cell.is_revealed or cell.is_mine:
-            return
-        cell.is_revealed = True
+        if cell.is_revealed or cell.is_flagged:
+            return True
 
-        if cell.neighbor_mines == 0 and cell.is_mine:
+        if cell.is_mine:
+            self.reveal_all_mines()
+            return False
+
+        if cell.neighbor_mines == 0:
             for nr, nc in self._get_neighbors(r, c):
                 self.reveal_cell(nr, nc)
+        return True
 
     def toggle_flag(self, r, c):
         if not self.grid[r][c].is_revealed:
-            self.grid[r][c].is_flagged = True
+            self.grid[r][c].is_flagged = not self.grid[r][c].is_flagged
 
     def reveal_all_mines(self):
         for r in range(self.rows):
