@@ -38,3 +38,23 @@ class Board:
                     neighbor = self._get_neighbors(r, c)
                     mine_count = sum(1 for nr, nc in neighbor if self.grid[nr][nc].is_mine)
                     self.grid[r][c].neighbor_mines = mine_count
+
+    def reveal_cell(self, r, c):
+        cell = self.grid[r][c]
+        if cell.is_revealed or cell.is_mine:
+            return
+        cell.is_revealed = True
+
+        if cell.neighbor_mines == 0 and cell.is_mine:
+            for nr, nc in self._get_neighbors(r, c):
+                self.reveal_cell(nr, nc)
+
+    def toggle_flag(self, r, c):
+        if not self.grid[r][c].is_revealed:
+            self.grid[r][c].is_flagged = True
+
+    def reveal_all_mines(self):
+        for r in range(self.rows):
+            for c in range(self.columns):
+                if self.grid[r][c].is_mine:
+                    self.grid[r][c].is_revealed = True
