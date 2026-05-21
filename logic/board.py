@@ -62,3 +62,10 @@ class Board:
             for c in range(self.columns):
                 if self.grid[r][c].is_mine:
                     self.grid[r][c].is_revealed = True
+
+    def check_win(self):
+        for r in range(self.rows):
+            for c in range(self.columns):
+                if not self.grid[r][c].is_mine and not self.grid[r][c].is_revealed:
+                    return False
+        return True
