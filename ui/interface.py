@@ -40,7 +40,7 @@ class Interface:
     def reset_grid(self):
         self.grid_data = [[None for _ in range(self.cols)] for _ in range(self.rows)]
 
-    def handle_click(self, pos):
+    def handle_click(self, pos, button):
         """Converts mouse pixel coordinates into grid row and column."""
         mouse_x, mouse_y = pos
 
@@ -52,9 +52,9 @@ class Interface:
             col = (mouse_x - self.start_x) // self.cell_size
             row = (mouse_y - self.start_y) // self.cell_size
             
-            # If a callback function was provided, send the row and col to logic
+            # If a callback function was provided, send the row, col and button to logic
             if self.on_click_callback:
-                self.on_click_callback(row, col)
+                self.on_click_callback(row, col, button)
 
     def events_handling(self):
         """Processes user inputs (mouse clicks, key presses, closing window)."""
@@ -63,14 +63,12 @@ class Interface:
                 self.running = False
 
             # Left-click is used for revealing tiles
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # 1 is the Left Mouse Button
-                    self.handle_click(event.pos)
-
             # Right-click is used for flagging
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 3:  # 3 is the Right Mouse Button
-                    self.handle_click(event.pos)
+                if event.button == 1:  # Left Mouse Button
+                    self.handle_click(event.pos, button=1)
+                elif event.button == 3:  # Right Mouse Button
+                    self.handle_click(event.pos, button=3)
 
             # Pressing 'R' key will reset the game
             if event.type == pygame.KEYDOWN:

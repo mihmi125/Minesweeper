@@ -1,6 +1,8 @@
 import pygame
 import os
 
+pygame.init()
+
 SCR_WIDTH = 800
 SCR_HEIGHT = 600
 GRID_ROWS = 8
