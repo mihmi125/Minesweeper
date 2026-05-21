@@ -71,3 +71,7 @@ class Board:
                 if not self.grid[r][c].is_mine and not self.grid[r][c].is_revealed:
                     return False
         return True
+
+    def reset_board(self):
+        self.grid = [[Cell() for _ in range(self.columns)] for _ in range(self.rows)]
+        self._setup_board()
