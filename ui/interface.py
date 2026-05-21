@@ -1,101 +1,133 @@
 import pygame
 import sys
-
+import config
 
 class Interface:
-    def __init__(self, width=800, height=600, title="Minesweeper", rows=3, cols=3, on_click_callback=None):
+    def __init__(self, on_click_callback=None):
         pygame.init()
-        self.width = width
-        self.height = height
-        self.title = title
+
+        # Screen settings from config.py
+        self.width = config.SCR_WIDTH
+        self.height = config.SCR_HEIGHT
+        self.title = config.TITLE
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(self.title)
 
-        self.rows = rows
-        self.cols = cols
-        self.cell_size = 40
+        # Grid dimensions and tile size from config.py
+        self.rows = config.GRID_ROWS
+        self.cols = config.GRID_COLS
+        self.cell_size = config.TILE_SIZE
 
+        #The callback function sends click data to main.py/logic.py
         self.on_click_callback = on_click_callback
         
-        # Setup font to display numbers and mines later
-        self.font = pygame.font.SysFont(None, 24)
+        self.board = None
 
-        self.reset_grid()
-
+        # Calculate the total grid width and height
         self.grid_width = self.cols * self.cell_size
         self.grid_height = self.rows * self.cell_size
+
+        # Calculate the starting x and y coordinates to center the grid on the screen
         self.start_x = (self.width - (self.cols * self.cell_size)) // 2
         self.start_y = (self.height - (self.rows * self.cell_size)) // 2
 
-        self.color_bg = (255, 255, 255)
-        self.color_grid = (0, 0, 0)
-        self.color_clicked = (200, 200, 200)
-
         self.running = True
+
+    def set_board(self, board):
+        """Connects the logic Board instance to this Interface."""
+        self.board = board
 
     def reset_grid(self):
         self.grid_data = [[None for _ in range(self.cols)] for _ in range(self.rows)]
 
     def handle_click(self, pos):
+        """Converts mouse pixel coordinates into grid row and column."""
         mouse_x, mouse_y = pos
 
-        # 1. Check if the click is actually inside the grid area
+        # Check if the click coordinates are inside the grid boundaries
         if (self.start_x <= mouse_x < self.start_x + self.grid_width and
             self.start_y <= mouse_y < self.start_y + self.grid_height):
             
-            # 2. Calculate which row and column was clicked
+            # Calculate which row and column was clicked
             col = (mouse_x - self.start_x) // self.cell_size
             row = (mouse_y - self.start_y) // self.cell_size
             
-            print(f"UI Log: Cell clicked at Row {row}, Col {col}")
+            # If a callback function was provided, send the row and col to logic
             if self.on_click_callback:
                 self.on_click_callback(row, col)
-    
-    def update_cell(self, row, col, value):
-        """Logic file will call this to tell the UI what to display."""
-        self.grid_data[row][col] = value
 
     def events_handling(self):
+        """Processes user inputs (mouse clicks, key presses, closing window)."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
-            # Handle mouse click events
+            # Left-click is used for revealing tiles
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left mouse button
+                if event.button == 1:  # 1 is the Left Mouse Button
                     self.handle_click(event.pos)
 
-            # Handle keyboard events for resetting the grid
+            # Right-click is used for flagging
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 3:  # 3 is the Right Mouse Button
+                    self.handle_click(event.pos)
+
+            # Pressing 'R' key will reset the game
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # Detect the 'R' key
-                    self.reset_grid()
+                if event.key == pygame.K_r:  # 'R' key for Reset
+                    if self.board:
+                        self.board.reset() # Tells the logic board to restart
 
     def draw_grid(self):
+        """Loops through the logic grid and draws the corresponding images."""
+        if not self.board:
+            return
+
         for r in range(self.rows):
             for c in range(self.cols):
+                # Get the Cell object from our logic board
+                cell = self.board.grid[r][c]
+
+                # Calculate the pixel position for this specific cell
                 x = self.start_x + (c * self.cell_size)
                 y = self.start_y + (r * self.cell_size)
-                rect = pygame.Rect(x, y, self.cell_size, self.cell_size)
 
-                if self.grid_data[r][c] is not None:
-                    pygame.draw.rect(self.screen, self.color_clicked, rect)
-                    
-                    # Render the text (e.g., "1", "2", "*")
-                    text_surf = self.font.render(str(self.grid_data[r][c]), True, (0, 0, 0))
-                    text_rect = text_surf.get_rect(center=rect.center)
-                    self.screen.blit(text_surf, text_rect)
+                # Default image is the 'Unknown' (unrevealed) tile
+                image = config.tile_unknown
 
-                pygame.draw.rect(self.screen, self.color_grid, rect, 1)
+                # Check the state of the logic cell to decide which image to show
+                if cell.is_revealed:
+                    if cell.is_mine:
+                        #Gets mine image
+                        image = config.tile_mine
+                    elif cell.neighbor_mines == 0:
+                        #Gets empty tile image
+                        image = config.tile_empty
+                    else:
+                        # Gets mine count number image (1-8)
+                        image = config.tile_numbers[cell.neighbor_mines - 1]
+                elif cell.is_flagged:
+                    image = config.tile_flag
+
+                # Draw the selected image at the calculated (x, y) position
+                self.screen.blit(image, (x, y))
 
     def update_display(self):
-        self.screen.fill(self.color_bg)
-        self.draw_grid()
-        pygame.display.flip()
+        """Clears the screen and draws the updated grid."""
+        self.screen.fill((50, 50, 50)) #Gray background color
+        self.draw_grid()              #Draw the grid on the screen
+        pygame.display.flip()         #Update the display to show the new frame
 
     def run(self):
+        """Main game loop."""
+        clock = pygame.time.Clock()
+        clock.tick(config.FPS)  # Limit the frame rate to FPS rate in config.py
         while self.running:
-            self.events_handling()
-            self.update_display()
+            self.events_handling()  # 1. Check for inputs
+            self.update_display()   # 2. Draw everything
+            clock.tick(config.FPS)  # 3. Maintain steady frame rate
+
+        # Clean up and close the application
         pygame.quit()
         sys.exit()
 
