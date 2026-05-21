@@ -7,4 +7,4 @@ class Cell:
 
     def __str__(self):
         if self.is_mine: return "M"
-        return self.neighbor_mines
+        return str(self.neighbor_mines)

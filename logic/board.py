@@ -44,6 +44,8 @@ class Board:
         if cell.is_revealed or cell.is_flagged:
             return True
 
+        cell.is_revealed = True
+
         if cell.is_mine:
             self.reveal_all_mines()
             return False
