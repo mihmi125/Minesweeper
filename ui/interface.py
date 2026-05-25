@@ -1,9 +1,8 @@
 import pygame
-import sys
 import config
 
 class Interface:
-    def __init__(self, on_click_callback=None):
+    def __init__(self, on_click_callback=None, change_state_callback=None):
         pygame.init()
 
         # Screen settings from config.py
@@ -20,6 +19,7 @@ class Interface:
 
         #The callback function sends click data to main.py/logic.py
         self.on_click_callback = on_click_callback
+        self.change_state_callback = change_state_callback
         
         self.board = None
 
@@ -57,7 +57,7 @@ class Interface:
         """Processes user inputs (mouse clicks, key presses, closing window)."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                return "QUIT"
 
             # Left-click is used for revealing tiles
             # Right-click is used for flagging
@@ -71,7 +71,12 @@ class Interface:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  # 'R' key for Reset
                     if self.board:
-                        self.board.reset() # Tells the logic board to restart
+                        self.board.reset_board() # Tells the logic board to restart
+                    elif event.key == pygame.K_ESCAPE:
+                        # Press Escape to go back to main menu
+                        if self.change_state_callback:
+                            self.change_state_callback("MENU")
+                    return None
 
     def draw_grid(self):
         """Loops through the logic grid and draws the corresponding images."""
@@ -112,16 +117,3 @@ class Interface:
         self.screen.fill((50, 50, 50)) #Gray background color
         self.draw_grid()              #Draw the grid on the screen
         pygame.display.flip()         #Update the display to show the new frame
-
-    def run(self):
-        """Main game loop."""
-        clock = pygame.time.Clock()
-        clock.tick(config.FPS)  # Limit the frame rate to FPS rate in config.py
-        while self.running:
-            self.events_handling()  # 1. Check for inputs
-            self.update_display()   # 2. Draw everything
-            clock.tick(config.FPS)  # 3. Maintain steady frame rate
-
-        # Clean up and close the application
-        pygame.quit()
-        sys.exit()
