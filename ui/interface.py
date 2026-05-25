@@ -37,9 +37,6 @@ class Interface:
         """Connects the logic Board instance to this Interface."""
         self.board = board
 
-    def reset_grid(self):
-        self.grid_data = [[None for _ in range(self.cols)] for _ in range(self.rows)]
-
     def handle_click(self, pos, button):
         """Converts mouse pixel coordinates into grid row and column."""
         mouse_x, mouse_y = pos
@@ -128,9 +125,3 @@ class Interface:
         # Clean up and close the application
         pygame.quit()
         sys.exit()
-
-
-
-if __name__ == "__main__":    
-    game = Interface()
-    game.run()
