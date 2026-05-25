@@ -74,7 +74,7 @@ class Interface:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  # 'R' key for Reset
                     if self.board:
-                        self.board.reset() # Tells the logic board to restart
+                        self.board.reset_board() # Tells the logic board to restart
 
     def draw_grid(self):
         """Loops through the logic grid and draws the corresponding images."""
