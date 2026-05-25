@@ -37,6 +37,20 @@ class Interface:
         """Connects the logic Board instance to this Interface."""
         self.board = board
 
+    def refresh_dimensions(self):
+        """Refreshes dimension settings from config.py when a new game starts."""
+        self.rows = config.GRID_ROWS
+        self.cols = config.GRID_COLS
+        self.cell_size = config.TILE_SIZE
+
+        # Recalculate grid dimensions based on updated values
+        self.grid_width = self.cols * self.cell_size
+        self.grid_height = self.rows * self.cell_size
+
+        # Recalculate centering coordinates
+        self.start_x = (self.width - self.grid_width) // 2
+        self.start_y = (self.height - self.grid_height) // 2
+
     def handle_click(self, pos, button):
         """Converts mouse pixel coordinates into grid row and column."""
         mouse_x, mouse_y = pos
@@ -72,11 +86,12 @@ class Interface:
                 if event.key == pygame.K_r:  # 'R' key for Reset
                     if self.board:
                         self.board.reset_board() # Tells the logic board to restart
-                    elif event.key == pygame.K_ESCAPE:
-                        # Press Escape to go back to main menu
-                        if self.change_state_callback:
-                            self.change_state_callback("MENU")
-                    return None
+
+                elif event.key == pygame.K_ESCAPE:  # ESC key for Main Menu
+                    if self.change_state_callback:
+                        self.change_state_callback("MENU")
+
+        return None
 
     def draw_grid(self):
         """Loops through the logic grid and draws the corresponding images."""
