@@ -34,8 +34,23 @@ class Interface:
         self.running = True
 
     def set_board(self, board):
-        """Connects the logic Board instance to this Interface."""
+        """
+        Connects the logic Board instance to this Interface and 
+        dynamically calculates grid sizes and centering offsets.
+        """
         self.board = board
+        
+        # Dynamically update rows and columns based on the newly provided board configuration
+        self.rows = board.rows
+        self.cols = board.columns
+        
+        # Recalculate grid pixel dimensions dynamically
+        self.grid_width = self.cols * self.cell_size
+        self.grid_height = self.rows * self.cell_size
+        
+        # Recalculate starting positions to center the grid on the current screen size
+        self.start_x = (self.width - self.grid_width) // 2
+        self.start_y = (self.height - self.grid_height) // 2
 
     def handle_click(self, pos, button):
         """Converts mouse pixel coordinates into grid row and column."""
@@ -53,11 +68,13 @@ class Interface:
             if self.on_click_callback:
                 self.on_click_callback(row, col, button)
 
-    def events_handling(self):
+    def events_handling(self, game_obj=None):
         """Processes user inputs (mouse clicks, key presses, closing window)."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                if game_obj:
+                    game_obj.running = False
 
             # Left-click is used for revealing tiles
             # Right-click is used for flagging
@@ -70,9 +87,14 @@ class Interface:
             # Pressing 'R' key will reset the game
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  # 'R' key for Reset
-                    if self.board:
-                        self.board.reset() # Tells the logic board to restart
-
+                    # 'R' key resets the game by initiating a completely fresh board instance
+                    if game_obj:
+                        game_obj.start_new_game() # Tells the logic board to restart
+                # ESC leads back to menu
+                elif event.key == pygame.K_ESCAPE: 
+                    # ESC key seamlessly transitions the player back to the main menu screen
+                    if game_obj:
+                        game_obj.state = "MENU"
     def draw_grid(self):
         """Loops through the logic grid and draws the corresponding images."""
         if not self.board:
