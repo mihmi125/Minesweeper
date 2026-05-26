@@ -1,9 +1,8 @@
 import pygame
-import sys
 import config
 
 class Interface:
-    def __init__(self, on_click_callback=None):
+    def __init__(self, on_click_callback=None, change_state_callback=None, on_reset_callback=None):
         pygame.init()
 
         # Screen settings from config.py
@@ -20,25 +19,27 @@ class Interface:
 
         #The callback function sends click data to main.py/logic.py
         self.on_click_callback = on_click_callback
+        self.change_state_callback = change_state_callback
+        self.on_reset_callback = on_reset_callback
         
         self.board = None
+        self.refresh_dimensions()
 
-        # Calculate the total grid width and height
+    def set_board(self, board):
+        """Links logic mapping engine variables and triggers dynamic boundary math updates."""
+        self.board = board
+        if board:
+            self.rows = getattr(board, 'rows', config.GRID_ROWS)
+            self.cols = getattr(board, 'cols', getattr(board, 'columns', config.GRID_COLS))
+        self.refresh_dimensions()
+
+    def refresh_dimensions(self):
+        """Calculates exact board boundaries and centers grid alignment offsets."""
         self.grid_width = self.cols * self.cell_size
         self.grid_height = self.rows * self.cell_size
 
-        # Calculate the starting x and y coordinates to center the grid on the screen
-        self.start_x = (self.width - (self.cols * self.cell_size)) // 2
-        self.start_y = (self.height - (self.rows * self.cell_size)) // 2
-
-        self.running = True
-
-    def set_board(self, board):
-        """Connects the logic Board instance to this Interface."""
-        self.board = board
-
-    def reset_grid(self):
-        self.grid_data = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.start_x = (self.width - self.grid_width) // 2
+        self.start_y = (self.height - self.grid_height) // 2
 
     def handle_click(self, pos, button):
         """Converts mouse pixel coordinates into grid row and column."""
@@ -60,7 +61,7 @@ class Interface:
         """Processes user inputs (mouse clicks, key presses, closing window)."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                return "QUIT"
 
             # Left-click is used for revealing tiles
             # Right-click is used for flagging
@@ -72,9 +73,16 @@ class Interface:
 
             # Pressing 'R' key will reset the game
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # 'R' key for Reset
-                    if self.board:
+                if event.key == pygame.K_r:  # Hotkey R resets game tracking data
+                    if self.on_reset_callback:
+                        self.on_reset_callback()
+                    elif self.board:
                         self.board.reset_board() # Tells the logic board to restart
+
+                elif event.key == pygame.K_ESCAPE:  # ESC leads back to menu selection maps
+                    if self.change_state_callback:
+                        self.change_state_callback("MENU")
+        return None
 
     def draw_grid(self):
         """Loops through the logic grid and draws the corresponding images."""
@@ -115,22 +123,3 @@ class Interface:
         self.screen.fill((50, 50, 50)) #Gray background color
         self.draw_grid()              #Draw the grid on the screen
         pygame.display.flip()         #Update the display to show the new frame
-
-    def run(self):
-        """Main game loop."""
-        clock = pygame.time.Clock()
-        clock.tick(config.FPS)  # Limit the frame rate to FPS rate in config.py
-        while self.running:
-            self.events_handling()  # 1. Check for inputs
-            self.update_display()   # 2. Draw everything
-            clock.tick(config.FPS)  # 3. Maintain steady frame rate
-
-        # Clean up and close the application
-        pygame.quit()
-        sys.exit()
-
-
-
-if __name__ == "__main__":    
-    game = Interface()
-    game.run()
