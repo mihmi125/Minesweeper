@@ -121,3 +121,10 @@ The game uses sprite tiles located in `ui/assets/`:
 **Game won't start**: Check that Pygame is installed: `pip install pygame`
 
 **Window not appearing**: Check if Pygame display mode is supported on your syste
+
+## Creators
+
+**Mihmi125**: Mihkel
+
+**Nurruw-Meowthra**: Siim
+
